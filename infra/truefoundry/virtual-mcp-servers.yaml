@@ -1,0 +1,60 @@
+version: 0.2.0
+description: >
+  Declarative Virtual MCP server definitions. Exact TrueFoundry UI/API field names
+  should be mapped during live setup.
+
+virtual_mcp_servers:
+  - name: halo-observe
+    description: Read-only observation tools for Halo agents.
+    source_mcp_servers:
+      - server_name: incident-api
+        selected_safe_tools:
+          - getHealthSummary
+          - getRecentDeploys
+          - getTopErrors
+          - getIncidentContext
+          - getRecentStatusEvents
+      - server_name: runbooks-api
+        selected_safe_tools:
+          - searchRunbooks
+          - getRunbook
+      - server_name: github-main
+        selected_safe_tools:
+          - PLACEHOLDER_GITHUB_READ_ONLY_TOOLS
+      - server_name: slack-main
+        selected_safe_tools:
+          - PLACEHOLDER_SLACK_READ_ONLY_TOOLS
+    excluded_tools:
+      - failNextCall
+      - delayNextCall
+      - returnBadPayload
+      - PLACEHOLDER_ANY_DELETE_TOOL
+      - PLACEHOLDER_ANY_BROAD_MUTATION_TOOL
+      - PLACEHOLDER_ANY_SHELL_EXECUTION_TOOL
+    risk_boundary: read_only
+
+  - name: halo-act
+    description: Approved, tightly scoped low-risk action tools for Halo.
+    source_mcp_servers:
+      - server_name: slack-main
+        selected_safe_tools:
+          - PLACEHOLDER_POST_INCIDENT_UPDATE_ONLY
+      - server_name: github-main
+        selected_safe_tools:
+          - PLACEHOLDER_CREATE_ISSUE_ONLY
+    excluded_tools:
+      - failNextCall
+      - delayNextCall
+      - returnBadPayload
+      - PLACEHOLDER_ANY_DELETE_TOOL
+      - PLACEHOLDER_ANY_BROAD_UPDATE_TOOL
+      - PLACEHOLDER_ANY_ROLLBACK_OR_PROD_MUTATION_TOOL
+      - PLACEHOLDER_ANY_SHELL_EXECUTION_TOOL
+    risk_boundary: approval_gated_low_risk_writes
+    expected_guardrails:
+      pre_invoke:
+        - action_parameter_validation
+        - risky_action_policy
+      post_invoke:
+        - tool_result_secrets_detection
+        - tool_result_pii_detection

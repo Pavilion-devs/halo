@@ -1,0 +1,42 @@
+version: 0.2.0
+description: >
+  Declarative saved-agent attachment matrix. This is not a guessed TrueFoundry API
+  payload; map it to the Agent Registry UI/API during live setup.
+
+saved_agents:
+  - agent_name: halo-normal
+    model: halo-vm-normal
+    attached_virtual_mcp_servers:
+      - halo-observe
+      - halo-act
+    iteration_limit: 5
+    prompt_file: ../prompts/halo-normal.md
+    guardrail_group: halo-guardrails
+    guardrail_attachment_status: PLACEHOLDER_CONFIRM_FIELD_NAME
+    purpose: Full response planning with observe tools and approved low-risk actions.
+
+  - agent_name: halo-degraded
+    model: halo-vm-degraded
+    attached_virtual_mcp_servers:
+      - halo-observe
+    iteration_limit: 3
+    prompt_file: ../prompts/halo-degraded.md
+    guardrail_group: halo-guardrails
+    guardrail_attachment_status: PLACEHOLDER_CONFIRM_FIELD_NAME
+    purpose: Reduced-ambition response with read-heavy behavior only.
+
+  - agent_name: halo-blackout
+    model: halo-vm-degraded
+    optional_fallback_model: bedrock-nova-micro-fast
+    attached_virtual_mcp_servers:
+      - halo-observe
+    iteration_limit: 2
+    prompt_file: ../prompts/halo-blackout.md
+    guardrail_group: halo-guardrails
+    guardrail_attachment_status: PLACEHOLDER_CONFIRM_FIELD_NAME
+    purpose: Preserve state, summarize, and hand off with no write tools.
+
+registration_notes:
+  - Confirm exact Agent Registry field names before API automation.
+  - Do not attach halo-act to halo-degraded or halo-blackout.
+  - Keep demo chaos operations out of saved-agent tool attachments.

@@ -1,0 +1,353 @@
+/* Halo theme — dark incident console. Neutral dark base (white spotlight cards,
+   white controls) with a semantic status palette:
+     indigo  #6366F1  → degraded / active / brand accent
+     green   #22C55E  → normal / healthy
+     red     #EF4444  → blackout / critical
+     gray    rgba(255,255,255,.25) → resolved / neutral
+   Scoped to .halo-dashboard; override layer over dashboard.css/halo.css. */
+
+.halo-dashboard {
+  --page: #0b0e13;
+  --shell: #0f141b;
+  --card: #151b24;
+  --card-muted: #1a212c;
+  --ink: #e9eef5;
+  --ink-dim: #9fabbb;
+  --muted: #66707f;
+  --line: #232c38;
+
+  /* green family neutralised to white (used for controls/neutral surfaces) */
+  --green: #e9eef5;
+  --green-2: #c2cad6;
+  --green-bright: #ffffff;
+  --green-light: rgba(255, 255, 255, 0.34);
+  --green-pale: rgba(255, 255, 255, 0.1);
+  --accent: #6366f1;
+  /* catch-alls so any stray reference resolves to the new palette */
+  --amber: #6366f1;
+  --pink: #ef4444;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 34px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.5), 0 18px 40px rgba(0, 0, 0, 0.55);
+
+  /* theme-driven element colours */
+  --gauge-arc: #4f46e5;
+  --gauge-arc-2: #6366f1;
+  --gauge-track: rgba(255, 255, 255, 0.06);
+  --evt-av-normal: linear-gradient(135deg, #22c55e, #15803d);
+  --evt-av-degraded: linear-gradient(135deg, #818cf8, #4f46e5);
+  --evt-av-blackout: linear-gradient(135deg, #f87171, #dc2626);
+
+  color: var(--ink);
+  background: var(--page);
+
+  & .topbar,
+  & .sb {
+    background: var(--shell);
+  }
+  & .search {
+    background: #1a212c;
+  }
+  & .search:focus-within {
+    background: #11161d;
+    border-color: rgba(99, 102, 241, 0.45);
+  }
+  & .search .kbd {
+    background: #11161d;
+    border-color: var(--line);
+    color: var(--ink-dim);
+  }
+  & .icon-btn {
+    background: #151b24;
+    border-color: var(--line);
+  }
+  & .icon-btn:hover {
+    background: #1a212c;
+  }
+  & .icon-btn svg {
+    color: var(--ink);
+  }
+  & .icon-btn .dot {
+    background: #6366f1;
+    box-shadow: 0 0 0 2px #0f141b;
+  }
+
+  /* sidebar: subtle white fill on the active item (no glow / no left bar) */
+  & .sb-link:hover {
+    background: #1a212c;
+    color: var(--ink);
+  }
+  & .sb-link.active {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+  & .sb-link.active::before {
+    display: none;
+  }
+
+  & .brand-mark {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+  & .me-avatar {
+    background: linear-gradient(135deg, #39434f, #222a33);
+    color: #e9eef5;
+  }
+  & .stat-arrow {
+    background: #1a212c;
+    border-color: var(--line);
+    color: var(--ink);
+  }
+
+  /* white spotlight cards on dark */
+  & .card.dark {
+    background: #ffffff;
+    border: 1px solid #e6e9ee;
+  }
+  & .card.dark::after {
+    display: none;
+  }
+  & .card.dark .stat-title,
+  & .card.dark .stat-value {
+    color: #0b0e13;
+  }
+  & .card.dark .stat-foot {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.06);
+    color: #3a4452;
+  }
+  & .tracker h3,
+  & .tracker .time {
+    color: #0b0e13;
+  }
+
+  /* war-room mode hero (white card) — coloured by status */
+  & .mode-hero-value {
+    color: #0b0e13;
+  }
+  & .mode-hero.mode-normal .mode-hero-value {
+    color: #0b0e13;
+  }
+  & .mode-hero.mode-degraded .mode-hero-value {
+    color: #4f46e5;
+  }
+  & .mode-hero.mode-blackout .mode-hero-value {
+    color: #dc2626;
+  }
+  & .mode-hero-copy {
+    color: #5b6470;
+  }
+
+  /* workflow-events bars: indigo active, faint white inactive */
+  & .bar {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  & .bar.on {
+    background: #6366f1;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+  }
+  & .bar.peak {
+    background: linear-gradient(180deg, #818cf8, #4f46e5);
+  }
+  & .peak-label {
+    background: #6366f1;
+    color: #fff;
+  }
+  & .peak-label::after {
+    background: #6366f1;
+  }
+
+  /* primary controls stay white */
+  & .btn.primary,
+  & .rem-btn {
+    background: #fff;
+    color: #0b0e13;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  /* pills — recent-activity Normal stays neutral; status badges are semantic */
+  & .status-pill.completed {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e9eef5;
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  & .verdict-pill.enter {
+    background: rgba(34, 197, 94, 0.16);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  & .status-pill.progress,
+  & .verdict-pill.watch {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+  & .status-pill.pending,
+  & .verdict-pill.ignore {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  & .verdict-pill.guardrail {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+  }
+  & .count-pill.muted {
+    background: var(--card-muted);
+    color: var(--ink-dim);
+  }
+  & .count-pill.badge-external {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+  }
+  & .launch-row:hover,
+  & .p-item:hover {
+    background: var(--card-muted);
+  }
+
+  /* mode posture sits on a white container — dark text for inactive options */
+  & .persona-switch-label,
+  & .mode-option {
+    color: #475467;
+  }
+  & .mode-option:hover {
+    background: #eef0f2;
+    color: #0b0e13;
+  }
+
+  /* status dots / mode posture — selected pill = solid colour + white text */
+  & .mode-option.active.mode-normal {
+    background: #15803d;
+    color: #fff;
+  }
+  & .mode-option.active.mode-degraded {
+    background: #4f46e5;
+    color: #fff;
+  }
+  & .mode-option.active.mode-blackout {
+    background: #dc2626;
+    color: #fff;
+  }
+  & .mode-dot.mode-normal {
+    background: #22c55e;
+  }
+  & .mode-dot.mode-degraded {
+    background: #6366f1;
+  }
+  & .mode-dot.mode-blackout {
+    background: #ef4444;
+  }
+
+  /* incidents right-rail avatars (dashboard) */
+  & .p-ic.green {
+    background: rgba(34, 197, 94, 0.16);
+    color: #22c55e;
+  }
+  & .p-ic.amber {
+    background: rgba(99, 102, 241, 0.16);
+    color: #a5b4fc;
+  }
+  & .p-ic.pink {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+  }
+
+  /* incident-list + timeline avatars */
+  & .launch-row .l-avatar {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.16);
+  }
+  & .launch-row .l-avatar.tone-amber {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.16);
+  }
+  & .launch-row .l-avatar.tone-pink {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.16);
+  }
+
+  /* continuity legend dots */
+  & .sw.c {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  & .sw.p {
+    background: #6366f1;
+  }
+  & .sw.pd {
+    background: #ef4444;
+  }
+
+  /* war-room surfaces */
+  & .btn.ghost {
+    background: var(--card);
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  & .btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  & .btn.danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.7);
+  }
+  & .opc-select,
+  & .gate-note {
+    background: #11161d;
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  & .opc-status.ok {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e9eef5;
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  & .opc-status.err {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.28);
+  }
+  & .memo-headline {
+    font-size: clamp(21px, 2.2vw, 30px);
+    line-height: 1.18;
+  }
+  & .read-section {
+    background: #11161d;
+    border-color: var(--line);
+  }
+  & .prepared-action-chip,
+  & .tool-chip {
+    background: #11161d;
+    border-color: var(--line);
+  }
+  & .external-action-kv {
+    border-color: var(--line);
+  }
+  & .trace-card {
+    background: #11161d;
+    border-color: var(--line);
+  }
+  & .tools-used {
+    background: #11161d;
+    border-color: var(--line);
+  }
+  & .guardrail-flag {
+    background: rgba(239, 68, 68, 0.08);
+    border: 0;
+    border-left: 2px solid #ef4444;
+    border-radius: 8px;
+    color: var(--ink);
+  }
+  & .guardrail-flag .gf-name {
+    color: #fca5a5;
+  }
+  & .demo-banner {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+  & .sb-badge.soon {
+    background: var(--card-muted);
+    color: var(--muted);
+  }
+}

@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: Halo Runbooks API
+  version: 0.1.0
+  description: Demo-safe runbook retrieval API intended for OpenAPI-to-MCP.
+paths:
+  /runbooks/search:
+    get:
+      operationId: searchRunbooks
+      summary: Search runbooks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Matching runbooks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunbookSearchResponse"
+  /runbooks/{slug}:
+    get:
+      operationId: getRunbook
+      summary: Fetch a runbook by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Runbook content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runbook"
+        "404":
+          description: Runbook not found
+components:
+  schemas:
+    RunbookSearchResponse:
+      type: object
+      required: [query, runbooks]
+      additionalProperties: false
+      properties:
+        query:
+          type: string
+        runbooks:
+          type: array
+          items:
+            type: object
+            required: [slug, title, summary]
+            additionalProperties: false
+            properties:
+              slug:
+                type: string
+              title:
+                type: string
+              summary:
+                type: string
+    Runbook:
+      type: object
+      required: [slug, title, summary, steps, risk_notes]
+      additionalProperties: false
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        steps:
+          type: array
+          items:
+            type: string
+        risk_notes:
+          type: array
+          items:
+            type: string

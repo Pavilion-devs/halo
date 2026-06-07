@@ -1,0 +1,72 @@
+version: 0.2.0
+description: >
+  Declarative MCP registration prep. This is not a guessed TrueFoundry API payload;
+  map these fields to the TrueFoundry UI/API during live registration.
+
+openapi_mcp_servers:
+  - server_name: incident-api
+    description: Demo-safe Halo product telemetry, status, deploy, and incident context API.
+    openapi_server_url: PLACEHOLDER_PUBLIC_HALO_API_BASE_URL
+    source_spec:
+      local_path: ../openapi/incident-api.yaml
+      registration_expectation: upload_spec_content_or_fetch_from_public_url
+      public_spec_url: PLACEHOLDER_PUBLIC_HALO_API_BASE_URL/openapi/incident-api.yaml
+    authentication:
+      required_for_local_demo: false
+      live_recommendation: secret_managed_bearer_or_api_key
+      placeholder_secret_name: HALO_CUSTOM_API_TOKEN
+    tools_expected_from_openapi:
+      observe:
+        - operation_id: getHealthSummary
+          method: GET
+          path: /health/summary
+        - operation_id: getRecentDeploys
+          method: GET
+          path: /deploys/recent
+        - operation_id: getTopErrors
+          method: GET
+          path: /errors/top
+        - operation_id: getIncidentContext
+          method: GET
+          path: /incidents/{incident_id}/context
+        - operation_id: getRecentStatusEvents
+          method: GET
+          path: /status/events/recent
+      demo_only_not_for_halo_observe:
+        - operation_id: failNextCall
+          method: POST
+          path: /demo/fail-next
+        - operation_id: delayNextCall
+          method: POST
+          path: /demo/delay-next
+        - operation_id: returnBadPayload
+          method: POST
+          path: /demo/return-bad-payload
+
+  - server_name: runbooks-api
+    description: Demo-safe Halo runbook search and retrieval API.
+    openapi_server_url: PLACEHOLDER_PUBLIC_HALO_API_BASE_URL
+    source_spec:
+      local_path: ../openapi/runbooks-api.yaml
+      registration_expectation: upload_spec_content_or_fetch_from_public_url
+      public_spec_url: PLACEHOLDER_PUBLIC_HALO_API_BASE_URL/openapi/runbooks-api.yaml
+    authentication:
+      required_for_local_demo: false
+      live_recommendation: secret_managed_bearer_or_api_key
+      placeholder_secret_name: HALO_CUSTOM_API_TOKEN
+    tools_expected_from_openapi:
+      observe:
+        - operation_id: searchRunbooks
+          method: GET
+          path: /runbooks/search
+        - operation_id: getRunbook
+          method: GET
+          path: /runbooks/{slug}
+
+future_native_or_remote_mcp_servers:
+  - server_name: github-main
+    status: placeholder_not_registered
+    purpose: GitHub deploy/code context and issue creation.
+  - server_name: slack-main
+    status: placeholder_not_registered
+    purpose: Slack war-room context and approved incident updates.

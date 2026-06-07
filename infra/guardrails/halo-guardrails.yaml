@@ -1,0 +1,144 @@
+name: halo-guardrails
+version: 0.1.0
+description: Deployment-oriented guardrail policy draft for Halo.
+status: PRE_REGISTRATION_DRAFT
+placeholder_notice: >
+  Provider/plugin identifiers and exact TrueFoundry policy field names must be
+  verified in the target workspace before live deployment.
+
+guardrail_hooks:
+  llm_input_guardrails:
+    - id: prompt_injection_detection
+      provider_identifier: PLACEHOLDER_TFY_PROMPT_INJECTION_GUARDRAIL
+      action:
+        demo-dev: flag
+        prod-like: block
+      applies_to:
+        agents: [halo-normal, halo-degraded, halo-blackout]
+        metadata:
+          environment: [staging, prod]
+    - id: pii_detection
+      provider_identifier: PLACEHOLDER_TFY_PII_DETECTION_GUARDRAIL
+      action:
+        demo-dev: redact
+        prod-like: redact
+      applies_to:
+        agents: [halo-normal, halo-degraded, halo-blackout]
+    - id: regex_secrets_detection
+      provider_identifier: PLACEHOLDER_TFY_REGEX_SECRET_GUARDRAIL
+      action:
+        demo-dev: flag
+        prod-like: block
+      applies_to:
+        metadata:
+          environment: [prod]
+
+  llm_output_guardrails:
+    - id: secrets_detection
+      provider_identifier: PLACEHOLDER_TFY_SECRETS_OUTPUT_GUARDRAIL
+      action:
+        demo-dev: redact
+        prod-like: block
+      applies_to:
+        agents: [halo-normal, halo-degraded, halo-blackout]
+    - id: external_comms_policy
+      provider_identifier: PLACEHOLDER_CUSTOM_EXTERNAL_COMMS_POLICY
+      action:
+        demo-dev: flag
+        prod-like: require_approval
+      applies_to:
+        metadata:
+          environment: [staging, prod]
+        output_kinds:
+          - customer_status_update
+          - slack_update
+
+  mcp_tool_pre_invoke_guardrails:
+    - id: observe_tool_parameter_validation
+      provider_identifier: PLACEHOLDER_JSON_SCHEMA_VALIDATION_GUARDRAIL
+      action:
+        demo-dev: block_invalid
+        prod-like: block_invalid
+      applies_to:
+        virtual_mcp_servers: [halo-observe]
+    - id: action_parameter_validation
+      provider_identifier: PLACEHOLDER_JSON_SCHEMA_VALIDATION_GUARDRAIL
+      action:
+        demo-dev: block_invalid
+        prod-like: block_invalid
+      applies_to:
+        virtual_mcp_servers: [halo-act]
+    - id: risky_action_policy
+      provider_identifier: PLACEHOLDER_CUSTOM_RISKY_ACTION_POLICY
+      action:
+        demo-dev: require_approval
+        prod-like: require_approval_or_block
+      applies_to:
+        virtual_mcp_servers: [halo-act]
+        metadata:
+          environment: [staging, prod]
+
+  mcp_tool_post_invoke_guardrails:
+    - id: tool_result_secrets_detection
+      provider_identifier: PLACEHOLDER_TFY_SECRETS_TOOL_RESULT_GUARDRAIL
+      action:
+        demo-dev: redact
+        prod-like: redact
+      applies_to:
+        virtual_mcp_servers: [halo-observe, halo-act]
+    - id: tool_result_pii_detection
+      provider_identifier: PLACEHOLDER_TFY_PII_TOOL_RESULT_GUARDRAIL
+      action:
+        demo-dev: redact
+        prod-like: redact
+      applies_to:
+        virtual_mcp_servers: [halo-observe, halo-act]
+    - id: result_sanity_check
+      provider_identifier: PLACEHOLDER_CUSTOM_TOOL_RESULT_SANITY_POLICY
+      action:
+        demo-dev: flag
+        prod-like: block_or_flag
+      applies_to:
+        virtual_mcp_servers: [halo-observe, halo-act]
+
+policy_profiles:
+  demo-dev:
+    metadata_targeting:
+      environment: [local, staging]
+      demo_run: ["true", true]
+    default_enforcement: flag_or_redact
+    allow_demo_chaos_tools: true
+
+  prod-like:
+    metadata_targeting:
+      environment: [prod]
+    default_enforcement: block_or_require_approval
+    allow_demo_chaos_tools: false
+    action_tool_requirements:
+      virtual_mcp_server: halo-act
+      approval_required: true
+      disallowed_tool_patterns:
+        - delete*
+        - bulk_update*
+        - execute_shell*
+
+targeting:
+  observe:
+    virtual_mcp_server: halo-observe
+    allowed_risk: read_only
+    pre_invoke_guardrails:
+      - observe_tool_parameter_validation
+    post_invoke_guardrails:
+      - tool_result_secrets_detection
+      - tool_result_pii_detection
+      - result_sanity_check
+  act:
+    virtual_mcp_server: halo-act
+    allowed_risk: low_risk_writes_only
+    pre_invoke_guardrails:
+      - action_parameter_validation
+      - risky_action_policy
+    post_invoke_guardrails:
+      - tool_result_secrets_detection
+      - tool_result_pii_detection
+      - result_sanity_check

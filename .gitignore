@@ -1,0 +1,27 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ruff_cache/
+*.db
+node_modules/
+.next/
+*.tsbuildinfo
+dist/
+coverage/
+
+# DB dumps / backups
+*.sqlite
+*.sqlite3
+*.db.backup*
+*.db-shm
+*.db-wal
+
+# Internal planning, chat, and working docs (not for the public repo)
+docs/
+codex-chat-*.md
+strategy.md
+technical-build-plan.md
+execution-checklist.md
