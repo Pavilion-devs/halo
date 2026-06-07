@@ -4,7 +4,9 @@ description: Deployment-oriented guardrail policy draft for Halo.
 status: PRE_REGISTRATION_DRAFT
 placeholder_notice: >
   Provider/plugin identifiers and exact TrueFoundry policy field names must be
-  verified in the target workspace before live deployment.
+  verified in the target workspace before live deployment. The live secrets/PII
+  guardrail is active in the tenant and has a real blocked-call trace — see
+  infra/deploy/live-setup-status.md.
 
 guardrail_hooks:
   llm_input_guardrails:

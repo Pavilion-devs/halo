@@ -16,7 +16,7 @@ Halo runs incidents through an explicit, checkpointed workflow with three operat
 - **Degraded** — when the primary model or a tool keeps failing, Halo falls back to a faster/cheaper model and a read-only toolset, and keeps going.
 - **Blackout** — when it's no longer safe to act, Halo stops writes, preserves state, and produces a clean handoff.
 
-A real run looks like this: Halo pulls live evidence through MCP tools → diagnoses the incident → prepares a risky action (e.g. a worker restart) → waits for a human to approve → executes it through the live ops path → re-checks the product and reports whether the action actually worked. In our demo it correctly found that the restart was *necessary but insufficient* — the real root cause was an upstream credential failure — instead of declaring victory early.
+A real run looks like this: Halo pulls live evidence through MCP tools → diagnoses the incident → prepares a risky action (e.g. a worker restart) → waits for a human to approve → executes it through the live ops path → re-checks the product and reports whether the action actually worked. In our demo — a deterministic replay of a real run, captured in `infra/deploy/live-setup-status.md` — it correctly found that the restart was *necessary but insufficient*: the real root cause was an upstream credential failure, not the worker, so it didn't declare victory early.
 
 Every step leaves a TrueFoundry trace, surfaced right in the UI: which model resolved, how many spans, which guardrails fired, and exactly which tools the agent called.
 
@@ -25,7 +25,7 @@ Every step leaves a TrueFoundry trace, surfaced right in the UI: which model res
 TrueFoundry's AI Gateway is the control plane for everything Halo does — every model call, every tool call, every guardrail goes through it. This maps to the submission checklist:
 
 - [x] **Model Gateway** — every LLM call routes through the gateway to AWS Bedrock. Nothing talks to a model directly.
-- [x] **Virtual Models** — `halo-vm-normal` (primary Claude + fallback target) and `halo-vm-degraded` (Claude Haiku), priority-routed. This is what lets Halo *degrade instead of die*: on rate-limit / timeout / 5xx the gateway fails over to the next target, and our backend flips the agent into degraded mode.
+- [x] **Virtual Models** — `halo-vm-normal` (primary Claude + fallback target) and `halo-vm-degraded` (Claude Haiku), priority-routed. This is what lets Halo *degrade instead of die*: on rate-limit / timeout / 5xx the gateway fails over to the next target, and our backend steps the agent down a mode — normal → degraded, then → blackout if failures keep coming.
 - [x] **MCP Gateway — connect a custom MCP endpoint** — we connected our live product's MCP server (`jaguaralpha.xyz/api/mcp`) as a remote MCP, and used OpenAPI-to-MCP to turn our own incident/runbooks APIs into tools.
 - [x] **MCP Gateway — Virtual MCP Servers** — `jaguar-observe` (read-only investigation) and `jaguar-act` (approval-gated writes). The agent's capability is decided by which virtual server it gets.
 - [x] **MCP Gateway — toggle tools on/off in an MCP Server** — we curated the exact tool set per server: chaos/dangerous tools off, reads and writes split, and degraded/blackout modes only receive the observe server.
@@ -79,7 +79,7 @@ Operator → War Room (Next.js) → Halo API (FastAPI)
                                      └── TrueFoundry Spans API   (trace evidence)
 ```
 
-The API owns an explicit incident state machine (`intake → classify → gather_evidence → draft_plan → execute_safe_actions → request_approval → monitor → handoff_or_close`). Mode logic and approvals live in our code; model routing, tool orchestration, guardrails, and tracing live in TrueFoundry. State is checkpointed after each stage, so an incident resumes from where it was instead of restarting.
+The API owns an explicit incident state machine (`intake → classify → gather_evidence → draft_plan → execute_safe_actions → request_approval → monitor → handoff_or_close`). Mode logic and approvals live in our code; model routing, tool orchestration, guardrails, and tracing live in TrueFoundry. State is persisted and checkpointed after each stage, so a run resumes from its current stage instead of restarting at intake.
 
 ## Project structure
 

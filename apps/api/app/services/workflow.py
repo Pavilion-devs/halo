@@ -13,6 +13,7 @@ from app.models.incident import (
     utc_now,
 )
 from app.schemas.incident import IncidentApproveRequest, IncidentRunRequest
+from app.services.chaos import chaos_registry
 from app.services.jaguar_actions import (
     JaguarActionClient,
     JaguarActionError,
@@ -117,6 +118,8 @@ def run_next_step(
         )
     )
     persist_checkpoint(incident, f"completed {next_stage}")
+    if _apply_injected_chaos(incident, request):
+        return incident
     if _truefoundry_enabled(agent_service):
         invoke_truefoundry_agent(incident, request, agent_service)
     return incident
@@ -146,8 +149,7 @@ def invoke_truefoundry_agent(
                 },
             )
         )
-        if incident.mode == IncidentMode.NORMAL:
-            set_mode(incident, IncidentMode.DEGRADED, "TrueFoundry invocation failed")
+        escalate_mode_after_failure(incident, "TrueFoundry invocation failed")
         persist_checkpoint(incident, "truefoundry invocation failed")
         return incident
 
@@ -193,6 +195,9 @@ def resolve_approval(
             )
         )
         return incident, None
+
+    if approval.details.get("demo_local") is True:
+        return _resolve_demo_local_approval(incident, approval, request)
 
     if approval.external_system == "jaguar":
         client = jaguar_action_client or JaguarActionClient()
@@ -251,6 +256,103 @@ def resolve_approval(
     return incident, approval
 
 
+def _resolve_demo_local_approval(
+    incident: Incident, approval: Approval, request: IncidentApproveRequest
+) -> tuple[Incident, Approval]:
+    """Resolve a demo approval entirely locally — no live external/VPS call.
+
+    On approve, this reveals the full executed -> verified outcome so a live click
+    on stage flips the incident from "awaiting approval" to the resolved state.
+    The capability is real and was proven in a live run; this path just keeps the
+    on-stage click deterministic and side-effect free.
+    """
+    approved = request.approved
+    approval.status = ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
+    approval.resolved_at = utc_now()
+
+    if not approved:
+        incident.status = IncidentStatus.HANDED_OFF
+        incident.latest_recommendation = (
+            "Operator rejected the worker restart. Halo is preserving state and "
+            "preparing a human handoff instead of acting."
+        )
+        incident.events.append(
+            IncidentEvent(
+                incident_id=incident.id,
+                type="approval.resolved",
+                payload={
+                    "approval_id": approval.id,
+                    "approved": False,
+                    "note": request.note,
+                    "external_system": approval.external_system,
+                    "external_action_id": approval.external_action_id,
+                },
+            )
+        )
+        persist_checkpoint(incident, "demo approval rejected")
+        return incident, approval
+
+    approval.external_status = "executed"
+    executed_response = approval.details.get("executed_response") or (
+        f"APPROVED action_request {approval.external_action_id} — Jaguar accepted the "
+        "request and ops-runner executed the worker restart."
+    )
+    approval.details = {**approval.details, "external_response": executed_response}
+
+    incident.status = IncidentStatus.RUNNING
+    incident.stage = IncidentStage.MONITOR
+    post_recommendation = approval.details.get("post_recommendation")
+    if isinstance(post_recommendation, str) and post_recommendation:
+        incident.latest_recommendation = post_recommendation
+
+    incident.events.append(
+        IncidentEvent(
+            incident_id=incident.id,
+            type="approval.resolved",
+            payload={
+                "approval_id": approval.id,
+                "approved": True,
+                "note": request.note,
+                "external_system": approval.external_system,
+                "external_action_id": approval.external_action_id,
+                "external_status": approval.external_status,
+            },
+        )
+    )
+    incident.events.append(
+        IncidentEvent(
+            incident_id=incident.id,
+            type="external.action_executed",
+            payload={
+                "action_type": approval.action_type,
+                "external_system": approval.external_system,
+                "external_action_id": approval.external_action_id,
+                "result": "worker restart executed by Jaguar ops-runner",
+            },
+        )
+    )
+    # The verification verdict below is replayed verbatim from a real live run — the
+    # worker restart executed via Jaguar's ops-runner and Halo's re-check found it
+    # "necessary but not sufficient" (real cause: an invalidated upstream credential).
+    # Kept deterministic for the on-stage click; that live run and this exact finding
+    # are documented in infra/deploy/live-setup-status.md.
+    incident.events.append(
+        IncidentEvent(
+            incident_id=incident.id,
+            type="verification.completed",
+            payload={
+                "outcome": "degraded",
+                "result": (
+                    "worker heartbeat recovered, but GoldRush INVALID_TOKEN persists and "
+                    "all streams remain dead"
+                ),
+            },
+        )
+    )
+    persist_checkpoint(incident, "demo approval executed and verified")
+    return incident, approval
+
+
 def set_mode(incident: Incident, mode: IncidentMode, reason: str) -> None:
     incident.mode = mode
     if mode == IncidentMode.NORMAL:
@@ -272,6 +374,64 @@ def set_mode(incident: Incident, mode: IncidentMode, reason: str) -> None:
             payload={"mode": mode, "reason": reason},
         )
     )
+
+
+def escalate_mode_after_failure(incident: Incident, reason: str) -> None:
+    """Step one rung down the resilience ladder after a failure.
+
+    NORMAL -> DEGRADED -> BLACKOUT. Blackout is terminal — once Halo has stopped
+    writing and handed off, a further failure does not change posture. Going
+    through set_mode keeps the agent/model/tool downgrade and the mode.changed
+    event consistent with every other transition.
+    """
+    if incident.mode == IncidentMode.NORMAL:
+        set_mode(incident, IncidentMode.DEGRADED, reason)
+    elif incident.mode == IncidentMode.DEGRADED:
+        set_mode(incident, IncidentMode.BLACKOUT, reason)
+
+
+# Injected-fault messages mirror the failure classes the hackathon asks us to
+# survive: tool failures, slow/timed-out responses, and bad intermediate output.
+INJECTED_FAILURE_MESSAGES = {
+    "fail_next": "Injected fault: primary model/tool call failed before returning.",
+    "delay_next": "Injected fault: tool call exceeded its timeout and was abandoned.",
+    "return_bad_payload": (
+        "Injected fault: tool returned a malformed payload; Halo refused to trust it."
+    ),
+}
+
+
+def _apply_injected_chaos(incident: Incident, request: IncidentRunRequest) -> bool:
+    """Drive Halo's real recovery path from an operator-armed chaos fault.
+
+    An armed fault takes precedence over a live gateway call so the failure is
+    deterministic on demand — the demo never has to wait for a real rate-limit or
+    5xx to happen. When one is consumed we exercise the genuine recovery code:
+    record the failure, step the mode down, and checkpoint, then short-circuit the
+    run. Returns True if a fault was applied, False if none was armed.
+    """
+    rule = chaos_registry.consume(incident.id, request.scenario)
+    if rule is None:
+        return False
+
+    detail = INJECTED_FAILURE_MESSAGES.get(rule.effect, f"Injected fault: {rule.effect}.")
+    incident.last_failure = detail
+    incident.events.append(
+        IncidentEvent(
+            incident_id=incident.id,
+            type="truefoundry.invocation_failed",
+            payload={
+                "error": detail,
+                "mode": incident.mode,
+                "stage": incident.stage,
+                "chaos_effect": rule.effect,
+                "injected": True,
+            },
+        )
+    )
+    escalate_mode_after_failure(incident, f"injected chaos: {rule.effect}")
+    persist_checkpoint(incident, f"recovered from injected {rule.effect}")
+    return True
 
 
 def persist_checkpoint(incident: Incident, reason: str) -> Incident:

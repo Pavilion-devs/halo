@@ -7,6 +7,7 @@ import { ApprovalGate } from "@/components/war-room/approval-gate";
 import { HaloReadCard } from "@/components/war-room/halo-read-card";
 import { IncidentTimeline } from "@/components/war-room/incident-timeline";
 import { ModeHero } from "@/components/war-room/mode-hero";
+import { OperatorConsole } from "@/components/war-room/operator-console";
 import { TraceEvidence } from "@/components/war-room/trace-evidence";
 import { getIncident, getIncidentTraces } from "@/lib/api";
 import { prettyStage, relativeTime } from "@/lib/dashboard";
@@ -137,6 +138,7 @@ export default async function WarRoomPage({ params }: { params: Promise<{ id: st
             approvals={incident.approvals}
             preparedActions={parsedRecommendation.preparedActions}
           />
+          <OperatorConsole incidentId={incident.id} />
         </aside>
       </div>
 

@@ -1,7 +1,9 @@
 version: 0.2.0
 description: >
   Declarative Virtual MCP server definitions. Exact TrueFoundry UI/API field names
-  should be mapped during live setup.
+  should be mapped during live setup. The live read/write split (jaguar-observe /
+  jaguar-act) is configured and proven in the tenant — see
+  infra/deploy/live-setup-status.md for the real tool wiring and trace evidence.
 
 virtual_mcp_servers:
   - name: halo-observe

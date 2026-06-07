@@ -180,9 +180,17 @@ export async function getDashboardModel(): Promise<DashboardModel> {
   };
 }
 
+const toMs = (iso: string): number => {
+  // SQLite-stored timestamps come back without a timezone; treat them as UTC
+  // so a UTC+offset viewer doesn't see everything shifted into the past.
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  return new Date(hasTz ? iso : `${iso}Z`).getTime();
+};
+
 export const relativeTime = (iso: string): string => {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.max(1, Math.round(ms / 60_000));
+  const ms = Date.now() - toMs(iso);
+  if (ms < 45_000) return "just now";
+  const mins = Math.round(ms / 60_000);
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   const rem = mins % 60;

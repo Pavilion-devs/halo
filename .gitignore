@@ -25,3 +25,10 @@ codex-chat-*.md
 strategy.md
 technical-build-plan.md
 execution-checklist.md
+submission.md
+
+# Internal deploy/setup notes (live-setup-status.md is kept — it's the public proof)
+infra/deploy/DEPLOY.md
+infra/deploy/backend-deployment.md
+infra/deploy/public-api-readiness.md
+infra/deploy/truefoundry-registration-checklist.md

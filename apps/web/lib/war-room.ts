@@ -152,7 +152,10 @@ export const traceViewFromLink = (link: TraceLink): TraceView => {
 export const shortModel = (model: string | null): string => {
   if (!model) return "—";
   const match = model.match(/claude[\w.-]*/i);
-  return match ? match[0].replace(/-v\d+$/, "") : model;
+  if (!match) return model;
+  const short = match[0].replace(/-v\d+$/, "");
+  const provider = model.includes("/") ? model.split("/")[0] : null;
+  return provider ? `${provider} · ${short}` : short;
 };
 
 export const WAR_ROOM_SCENARIO = "war-room";

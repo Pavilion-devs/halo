@@ -1,0 +1,1 @@
+web: python -c "import app.db.models; from app.db.session import create_db_and_tables; create_db_and_tables()" && python scripts/seed_resilience_demo.py && python scripts/seed_live_approval_demo.py && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
