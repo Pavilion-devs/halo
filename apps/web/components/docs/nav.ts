@@ -16,6 +16,7 @@ export const DOCS_NAV: DocGroup[] = [
     group: "How it works",
     links: [
       { label: "Architecture", href: "/docs/architecture" },
+      { label: "Jaguar integration", href: "/docs/jaguar" },
       { label: "Resilience & modes", href: "/docs/resilience" },
       { label: "Guardrails & safety", href: "/docs/guardrails" }
     ]

@@ -1,14 +1,24 @@
+<div align="center">
+
 # Halo
 
-🌐 **Live app:** [haloagent.xyz](https://haloagent.xyz)  ·  ▶️ **Demo video:** [Watch on YouTube](https://youtu.be/nW7aeeBrIZQ)
+**A resilient incident commander agent — built to stay standing when its own infrastructure breaks.**
 
-Hi, this is **Halo** — a resilient incident commander agent.
+🌐 [**Live app**](https://haloagent.xyz) &nbsp;·&nbsp; ▶️ [**Live demo**](https://youtu.be/nW7aeeBrIZQ) &nbsp;·&nbsp; 📖 [**Docs**](https://haloagent.xyz/docs)
+
+</div>
 
 When a live product breaks, Halo investigates it, works out what's *actually* wrong, proposes a recovery action behind a human approval gate, executes it, and then checks whether it actually fixed the problem. The whole point is what happens when things go sideways: when models rate-limit, tools time out, or a provider falls over, Halo doesn't crash — it drops to a safer operating mode and keeps making progress.
 
 It runs against a real live product (Jaguar), not a toy. Built for the TrueFoundry **Resilient Agents** hackathon on AWS Bedrock.
 
-![Halo war room](image.png)
+<div align="center">
+
+[![Watch the Halo demo](image.png)](https://youtu.be/nW7aeeBrIZQ)
+
+▶️ **Watch the demo**
+
+</div>
 
 ## What it actually does
 

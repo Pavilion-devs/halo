@@ -59,6 +59,12 @@
     align-items: center;
     gap: 10px;
     padding: 0 8px 28px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  & .brand:hover {
+    opacity: 0.8;
   }
 
   & .brand-mark {

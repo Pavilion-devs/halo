@@ -36,7 +36,7 @@ export function Sidebar() {
 
   return (
     <aside className="sb">
-      <div className="brand">
+      <Link href="/" className="brand" aria-label="Halo — home">
         <span className="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none">
             <title>Halo</title>
@@ -51,7 +51,7 @@ export function Sidebar() {
           </svg>
         </span>
         <span className="brand-name">Halo</span>
-      </div>
+      </Link>
 
       <div className="sb-section">Menu</div>
       <nav className="sb-nav">
