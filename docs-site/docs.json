@@ -1,0 +1,41 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Halo",
+  "description": "A resilient incident commander agent built on the TrueFoundry AI Gateway and AWS Bedrock.",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": ["introduction", "how-it-works"]
+      },
+      {
+        "group": "Reference",
+        "pages": ["architecture", "truefoundry", "api-reference"]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Demo",
+        "href": "https://youtu.be/nW7aeeBrIZQ"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "GitHub",
+      "href": "https://github.com/Pavilion-devs/halo"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Pavilion-devs/halo"
+    }
+  }
+}

@@ -20,12 +20,16 @@ coverage/
 *.db-wal
 
 # Internal planning, chat, and working docs (not for the public repo)
-docs/
+# Root-anchored so it does NOT match the in-app docs route (apps/web/app/docs, components/docs)
+/docs/
 codex-chat-*.md
 strategy.md
 technical-build-plan.md
 execution-checklist.md
 submission.md
+
+# Source project the landing page was ported from (not part of Halo)
+/app/
 
 # Internal deploy/setup notes (live-setup-status.md is kept — it's the public proof)
 infra/deploy/DEPLOY.md

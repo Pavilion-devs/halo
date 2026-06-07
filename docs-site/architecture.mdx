@@ -1,0 +1,71 @@
+---
+title: Architecture
+description: "The monorepo, the components, and the safety design — read/write tool split, approval gate, and checkpoints."
+---
+
+## Monorepo layout
+
+Halo is a monorepo with a clear split between the operator UI, the workflow engine, and
+the infrastructure config.
+
+| Path | What it is |
+| --- | --- |
+| `apps/web` | The operator UI — Next.js 15 / React 19 / Tailwind 4. The landing page plus the dashboard and the incident "war room". |
+| `apps/api` | The workflow engine — FastAPI + SQLModel/SQLite (Python 3.12). Runs the incident workflow, talks to the TrueFoundry gateway, persists checkpoints. |
+| `infra/` | Deploy and live-setup config, including the documented real run. |
+
+## Components
+
+<CardGroup cols={2}>
+  <Card title="Workflow engine" icon="gears">
+    Drives the staged incident workflow, mode transitions, checkpointing, and approvals.
+    Every model and tool call goes out through the TrueFoundry gateway.
+  </Card>
+  <Card title="Operator war room" icon="display">
+    Renders the incident: Halo's read, the trace evidence (model, spans, guardrails,
+    tools), the event timeline, and the approval gate.
+  </Card>
+  <Card title="MCP tool servers" icon="server">
+    The product is reached **only** through MCP — split into a read server and a write
+    server (see below).
+  </Card>
+  <Card title="Persistence" icon="database">
+    Incidents, events, approvals, checkpoints, and trace links are stored so a run is
+    durable and resumable.
+  </Card>
+</CardGroup>
+
+## Safety by construction
+
+Halo's safety isn't a prompt instruction — it's enforced by the topology.
+
+### Read/write tool isolation
+
+The product's tools are split across **two separate MCP servers** at the gateway:
+
+- `jaguar-observe` — read-only tools (status, diagnostics, deploys, failures).
+- `jaguar-act` — write tools (the actions that change production).
+
+In **degraded** mode, Halo is restricted to the read server. Write capability simply
+isn't on the table when the agent is operating under stress.
+
+### Human approval gate
+
+Anything that writes has to clear a human approval before it runs. The action is
+registered as a pending approval; the incident sits in `waiting_for_approval` until an
+operator approves or rejects. Only on approval does the write execute through
+`jaguar-act`.
+
+### Checkpoints
+
+Every stage persists a checkpoint, so the agent's state is durable. A run resumes from its
+current stage instead of restarting — which matters precisely when something failed
+mid-incident.
+
+<Note>
+  Nothing in Halo is Jaguar-specific. It reaches the product *only* through the MCP
+  Gateway, so connecting a different product is configuration plus a thin action adapter
+  (expose it as an MCP server, split into a read server and an approval-gated write
+  server). The mode ladder, approval gate, checkpoints, and self-verification all work
+  unchanged.
+</Note>

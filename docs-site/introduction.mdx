@@ -1,0 +1,65 @@
+---
+title: Introduction
+description: "Halo is a resilient incident commander — an agent built to stay standing when its own infrastructure breaks."
+---
+
+## The problem
+
+Agents fall apart the moment their infrastructure does. A model starts rate-limiting,
+a tool times out, a provider has a bad day — and the agent either crashes, starts making
+things up, or quietly does the wrong thing. That's especially painful during an incident,
+because the one tool you're leaning on to recover just became another thing that's down.
+
+## What Halo does
+
+Halo is an incident commander that's built to stay standing when things break. It works
+real incidents on a live product — [Jaguar](https://www.jaguaralpha.xyz) — through
+TrueFoundry's AI Gateway and MCP Gateway, and instead of failing it **degrades**.
+
+<CardGroup cols={2}>
+  <Card title="Investigates, doesn't guess" icon="magnifying-glass">
+    Pulls live worker status, ingestion, deploys, and failures through the product's MCP
+    tools and works out the real root cause.
+  </Card>
+  <Card title="Asks before it acts" icon="shield-check">
+    Risky actions are split onto a separate write server and never run without human
+    approval.
+  </Card>
+  <Card title="Degrades instead of dying" icon="layer-group">
+    On a rate-limit or outage it fails over to a backup model and steps down a mode —
+    cheaper model, read-only tools — instead of crashing.
+  </Card>
+  <Card title="Tells the truth" icon="circle-check">
+    After a fix runs, it re-checks the product and reports whether the action actually
+    worked — no premature victory laps.
+  </Card>
+</CardGroup>
+
+## A real run
+
+In our demo run, Halo diagnosed a real Jaguar worker blackout, prepared a worker restart,
+and — once an operator approved it — executed it on the live VPS through Jaguar's
+ops-runner. Then it checked its own work and reported the truth: the restart was necessary
+but it wasn't the whole fix. The real culprit was an upstream credential that had been
+invalidated.
+
+Nothing dangerous ran without a human, nothing sensitive slipped through a guardrail, and
+the whole run is backed by TrueFoundry traces.
+
+<Note>
+  Built for the TrueFoundry **Resilient Agents** hackathon on AWS Bedrock.
+</Note>
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="How it works" icon="route" href="/how-it-works">
+    The workflow, the operating modes, and a walkthrough of a real incident.
+  </Card>
+  <Card title="Architecture" icon="cubes" href="/architecture">
+    The monorepo, the read/write MCP split, the approval gate, and checkpoints.
+  </Card>
+  <Card title="TrueFoundry" icon="plug" href="/truefoundry">
+    Exactly which gateway features we used and how.
+  </Card>
+</CardGroup>

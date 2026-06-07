@@ -1,0 +1,79 @@
+---
+title: TrueFoundry
+description: "Exactly which AI Gateway features Halo uses, and how each one maps to resilience."
+---
+
+TrueFoundry's AI Gateway is the control plane for everything Halo does — every model call,
+every tool call, and every guardrail goes through it. Most of Halo's resilience lives in
+gateway **configuration**, not in our code.
+
+## Model Gateway
+
+Every LLM call routes through the gateway to **AWS Bedrock**. Nothing talks to a model
+directly. This is what makes the rest of the resilience story possible — routing, fallback,
+and observability are all enforced at one layer.
+
+## Virtual Models
+
+Halo defines two virtual models, priority-routed to Bedrock targets:
+
+| Virtual model | Role |
+| --- | --- |
+| `halo-vm-normal` | Primary Claude on Bedrock **with a fallback target** behind it. |
+| `halo-vm-degraded` | A faster/cheaper model used when Halo steps down a mode. |
+
+This is what lets Halo **degrade instead of die**: on a rate-limit, timeout, or 5xx, the
+gateway fails over to the next target automatically — no retry/failover logic in our agent —
+and our backend steps the agent down a mode (`normal → degraded`, then `→ blackout` if
+failures continue).
+
+## MCP Gateway
+
+The same gateway governs the product's tools, exposed as two virtual MCP servers:
+
+- `jaguar-observe` — read-only tools.
+- `jaguar-act` — approval-gated write tools.
+
+Splitting the tools across two servers gives per-server governance out of the box — which
+is exactly how Halo enforces read-only operation in degraded mode. See
+[Architecture](/architecture#readwrite-tool-isolation).
+
+## Guardrails
+
+A **secrets-detection** guardrail runs inline at the gateway. In one incident the notes
+contained a token; the guardrail caught and blocked the call without us writing any
+detection logic, and Halo dropped into a safer mode rather than breaking. Security becomes
+a gateway policy rather than application code.
+
+## Observability — Spans & Request Logs
+
+Every step leaves a trace. Halo surfaces the trace right in the war room: which model
+resolved, how many spans the run produced, which guardrails fired, and exactly which tools
+the agent called. This is the audit trail that lets us prove a run happened rather than
+just claim it.
+
+<Note>
+  Heads-up from building on it: the spans query API was occasionally slow during the build,
+  so for the live demo Halo serves a cached trace summary instead of issuing a live span
+  query mid-incident — keeping the demo deterministic.
+</Note>
+
+## How it maps to the submission checklist
+
+<CardGroup cols={2}>
+  <Card title="Model Gateway" icon="check">
+    Every LLM call routes through the gateway to Bedrock.
+  </Card>
+  <Card title="Virtual Models" icon="check">
+    `halo-vm-normal` (primary + fallback) and `halo-vm-degraded`, priority-routed.
+  </Card>
+  <Card title="MCP Gateway" icon="check">
+    `jaguar-observe` (read) and `jaguar-act` (write) virtual MCP servers.
+  </Card>
+  <Card title="Guardrails" icon="check">
+    Inline secrets-detection blocks sensitive input at the gateway.
+  </Card>
+  <Card title="Observability" icon="check">
+    Spans / request logs surfaced as trace evidence in the UI.
+  </Card>
+</CardGroup>

@@ -1,3 +1,4 @@
+import "../globals.css";
 import "../theme.css";
 import "../dashboard.css";
 import "../halo.css";

@@ -1,6 +1,6 @@
 # Halo
 
-▶️ **Live demo:** https://youtu.be/nW7aeeBrIZQ
+🌐 **Live app:** [haloagent.xyz](https://haloagent.xyz)  ·  ▶️ **Demo video:** [Watch on YouTube](https://youtu.be/nW7aeeBrIZQ)
 
 Hi, this is **Halo** — a resilient incident commander agent.
 

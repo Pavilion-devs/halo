@@ -1,0 +1,121 @@
+---
+title: API reference
+description: "The Halo incident API — create, list, run, approve, and inspect incidents."
+---
+
+The workflow engine (`apps/api`) is a FastAPI service. In local development it runs at
+`http://127.0.0.1:8000`. All incident endpoints are under the `/incidents` prefix.
+
+<Note>
+  Interactive OpenAPI docs are served by FastAPI at `/docs` (Swagger UI) and `/openapi.json`
+  when the API is running.
+</Note>
+
+## Health
+
+<ParamField path="GET /health" type="endpoint" />
+<ParamField path="GET /readiness" type="endpoint" />
+
+Liveness and readiness probes. Return `200` when the service is up.
+
+## Incidents
+
+### Create an incident
+
+`POST /incidents` → `201 Created`
+
+```json Request
+{
+  "title": "Jaguar worker offline after recent deploy",
+  "severity": "sev1",
+  "environment": "production",
+  "product": "jaguar",
+  "summary": "Worker heartbeat dropped after deploy; ingestion stalled."
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `title` | string | Required, 3–160 chars. |
+| `severity` | enum | `sev1` \| `sev2` \| `sev3`. Defaults to `sev2`. |
+| `environment` | string | Defaults to the configured environment. |
+| `product` | string | Defaults to the configured product. |
+| `summary` | string \| null | Optional. |
+
+Returns the seeded incident: `{ "incident": { ... } }`.
+
+### List incidents
+
+`GET /incidents` → `200 OK`
+
+Returns `{ "incidents": [ ... ] }`.
+
+### Get one incident
+
+`GET /incidents/{incident_id}` → `200 OK` (`404` if not found)
+
+Returns `{ "incident": { ... } }` including events, approvals, checkpoints, and trace links.
+
+### Run the next step
+
+`POST /incidents/{incident_id}/run` → `200 OK`
+
+Advances the incident one stage through the workflow, invoking the agent via the
+TrueFoundry gateway.
+
+```json Request
+{
+  "scenario": null,
+  "force_mode": null,
+  "demo_run": false
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `scenario` | string \| null | Optional scenario hint. |
+| `force_mode` | enum \| null | `normal` \| `degraded` \| `blackout` — force a mode. |
+| `demo_run` | bool | Tags the run as a demo. Defaults to `false`. |
+
+### Approve (or reject) an action
+
+`POST /incidents/{incident_id}/approve` → `200 OK`
+
+Resolves a pending approval. On approval, the gated write action executes through the
+`jaguar-act` MCP server; the incident then advances to verification.
+
+```json Request
+{
+  "approval_id": "apr_...",
+  "approved": true,
+  "note": "Approved — restart the worker."
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `approval_id` | string \| null | Which approval to resolve. Defaults to the pending one. |
+| `approved` | bool | `true` to approve, `false` to reject. Defaults to `true`. |
+| `note` | string \| null | Optional operator note. |
+
+Returns `{ "incident": { ... }, "approval": { ... } }`.
+
+### Sync external approvals
+
+`POST /incidents/{incident_id}/sync-approvals` → `200 OK`
+
+Reconciles approval state against the recommendation text and TrueFoundry trace spans.
+
+### Get trace evidence
+
+`GET /incidents/{incident_id}/traces` → `200 OK`
+
+Returns the trace summary surfaced in the war room — model resolved, span count, guardrails
+that fired, and the tools the agent called. See [TrueFoundry](/truefoundry#observability--spans--request-logs).
+
+## Product (simulated) API
+
+The repo also ships a simulated product surface (`/health/summary`, `/deploys/recent`,
+`/errors/top`, `/status/events/recent`, `/runbooks/*`, and `/demo/*` chaos toggles). These
+back the MCP tools Halo calls during an investigation and are not part of the public
+incident API.

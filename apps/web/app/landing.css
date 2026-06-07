@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+/* The landing page lives at "/" and is intentionally its own light, modern
+   surface — separate from the dark war-room dashboard under (shell). Everything
+   here is scoped under .halo-landing so it never leaks into the app. */
+
+.halo-landing {
+  min-height: 100vh;
+  width: 100%;
+  background: #fdfdfc;
+  color: #171717;
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.halo-landing ::selection {
+  background: #171717;
+  color: #fff;
+}
+
+.halo-landing .font-mono-display {
+  font-family: 'Space Mono', monospace;
+}
+
+/* Smooth scroll-reveal animation */
+.halo-landing .reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.halo-landing .reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.halo-landing .delay-100 { transition-delay: 100ms; }
+.halo-landing .delay-200 { transition-delay: 200ms; }
+.halo-landing .delay-300 { transition-delay: 300ms; }

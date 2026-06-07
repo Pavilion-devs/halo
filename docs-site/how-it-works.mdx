@@ -1,0 +1,80 @@
+---
+title: How it works
+description: "The incident workflow, the three operating modes, and a walkthrough of a real run."
+---
+
+Halo runs every incident through an explicit, checkpointed workflow with three operating
+modes. The point of the design is what happens when things go wrong — so resilience is
+built into both the workflow (it can resume) and the routing (it can fail over).
+
+## The three operating modes
+
+<CardGroup cols={3}>
+  <Card title="Normal" icon="circle-play">
+    Best model, full read + write (approval-gated) tools, multi-step investigation.
+  </Card>
+  <Card title="Degraded" icon="circle-half-stroke">
+    When the primary model or a tool keeps failing, Halo falls back to a faster/cheaper
+    model and a read-only toolset — and keeps going.
+  </Card>
+  <Card title="Blackout" icon="circle-stop">
+    When it's no longer safe to act, Halo stops writes, preserves state, and produces a
+    clean handoff to a human.
+  </Card>
+</CardGroup>
+
+The mode ladder is driven by failures: repeated rate-limits / timeouts / 5xx from the
+gateway step the agent down `normal → degraded`, and continued failure escalates
+`degraded → blackout`.
+
+## The workflow
+
+<Steps>
+  <Step title="Detect & diagnose">
+    Halo pulls live evidence — worker status, ingestion diagnostics, recent deploys,
+    recent failures — through the product's MCP tools, lines the symptoms up against the
+    deploy timeline, and matches a recovery runbook.
+  </Step>
+  <Step title="Decide with a human">
+    It prepares a recovery action (e.g. a worker restart) but does **not** touch
+    production on its own. The action is registered as a pending approval and the
+    incident waits.
+  </Step>
+  <Step title="Execute">
+    On operator approval, Halo executes the action through the live ops path (the
+    approval-gated write server).
+  </Step>
+  <Step title="Verify">
+    It re-checks the product and reports whether the action actually restored service —
+    instead of assuming success.
+  </Step>
+</Steps>
+
+Every stage writes a **checkpoint**, so the agent's state is durable: a run resumes from
+its current stage instead of restarting from scratch.
+
+## A real run, walked through
+
+In the demo incident, a Jaguar worker's heartbeat dropped right after a deploy and
+ingestion stalled across all live streams.
+
+1. Halo classified it **SEV-1** and gathered evidence through MCP read tools.
+2. Its working theory: the worker died after the deploy. It prepared a **worker restart**
+   and held it at the approval gate.
+3. An operator approved. Halo executed the restart through Jaguar's ops-runner.
+4. On verification, the worker came back — **but ingestion was still down**. Halo did not
+   declare victory. It reported that the restart was *necessary but insufficient*: the
+   real root cause was an upstream credential (`GoldRush INVALID_TOKEN`) that had been
+   invalidated.
+
+<Note>
+  The on-stage demo replays this exact run deterministically — the live execution and
+  self-verification it replays are captured in the repo's
+  `infra/deploy/live-setup-status.md`.
+</Note>
+
+## What you see in the UI
+
+Every step leaves a TrueFoundry trace, surfaced right in the war room: which model
+resolved, how many spans, which guardrails fired, and exactly which tools the agent
+called. See [TrueFoundry](/truefoundry) for how that's wired.
