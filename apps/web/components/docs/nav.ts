@@ -25,6 +25,7 @@ export const DOCS_NAV: DocGroup[] = [
     group: "Platform & deployment",
     links: [
       { label: "TrueFoundry + Bedrock", href: "/docs/truefoundry" },
+      { label: "Deployment", href: "/docs/deployment" },
       { label: "API reference", href: "/docs/api" }
     ]
   }

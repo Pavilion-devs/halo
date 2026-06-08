@@ -38,19 +38,19 @@ export default function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Footer parallax
+  // Footer parallax — a gentle, symmetric drift around the centered wordmark
   useEffect(() => {
     const handleScroll = () => {
-      if (footerTextRef.current) {
-        const rect = footerTextRef.current.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        if (rect.top < windowHeight) {
-          const move = (windowHeight - rect.top) * 0.1;
-          footerTextRef.current.style.transform = `translateX(-${move}px)`;
-        }
-      }
+      if (!footerTextRef.current) return;
+      const rect = footerTextRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const progress = (windowHeight - rect.top) / (windowHeight + rect.height);
+      const clamped = Math.max(0, Math.min(1, progress));
+      const move = (clamped - 0.5) * 48; // ~±24px, stays centered
+      footerTextRef.current.style.transform = `translateX(${move}px)`;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -405,7 +405,7 @@ export default function LandingPage() {
           <div className="w-full overflow-hidden py-10">
             <h1
               ref={footerTextRef}
-              className="text-[15vw] leading-[0.8] uppercase whitespace-nowrap select-none transition-transform duration-75 will-change-transform font-bold text-black tracking-tighter"
+              className="text-center text-[15vw] leading-[0.8] uppercase whitespace-nowrap select-none transition-transform duration-75 will-change-transform font-bold text-black tracking-tighter"
               style={{ transform: "translateX(0)" }}
             >
               Halo
