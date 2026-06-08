@@ -10,7 +10,7 @@
 
 When a live product breaks, Halo investigates it, works out what's *actually* wrong, proposes a recovery action behind a human approval gate, executes it, and then checks whether it actually fixed the problem. The whole point is what happens when things go sideways: when models rate-limit, tools time out, or a provider falls over, Halo doesn't crash — it drops to a safer operating mode and keeps making progress.
 
-It runs against a real live product (Jaguar), not a toy. Built for the TrueFoundry **Resilient Agents** hackathon on AWS Bedrock.
+It runs against a real live product ([**Jaguar**](https://www.jaguaralpha.xyz)). Built for the TrueFoundry **Resilient Agents** hackathon on AWS Bedrock.
 
 <div align="center">
 
