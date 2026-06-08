@@ -1,0 +1,251 @@
+openapi: 3.1.0
+info:
+  title: Halo Incident API
+  version: 0.1.0
+  description: Demo-safe product incident and telemetry API intended for OpenAPI-to-MCP.
+paths:
+  /health/summary:
+    get:
+      operationId: getHealthSummary
+      summary: Get product health summary
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "200":
+          description: Product health summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSummary"
+        "503":
+          $ref: "#/components/responses/DemoChaosFailure"
+  /deploys/recent:
+    get:
+      operationId: getRecentDeploys
+      summary: List recent deploys
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "200":
+          description: Recent deploy list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentDeploys"
+        "503":
+          $ref: "#/components/responses/DemoChaosFailure"
+  /errors/top:
+    get:
+      operationId: getTopErrors
+      summary: List top error signatures
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "200":
+          description: Top error signatures
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopErrors"
+        "503":
+          $ref: "#/components/responses/DemoChaosFailure"
+  /incidents/{incident_id}/context:
+    get:
+      operationId: getIncidentContext
+      summary: Get incident context packet
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "200":
+          description: Incident context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentContext"
+        "503":
+          $ref: "#/components/responses/DemoChaosFailure"
+  /status/events/recent:
+    get:
+      operationId: getRecentStatusEvents
+      summary: List recent status events
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "200":
+          description: Recent status events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentStatusEvents"
+        "503":
+          $ref: "#/components/responses/DemoChaosFailure"
+  /demo/fail-next:
+    post:
+      operationId: failNextCall
+      summary: Make the next demo API call fail
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "202":
+          description: Failure armed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChaosArmResponse"
+  /demo/delay-next:
+    post:
+      operationId: delayNextCall
+      summary: Delay the next demo API call
+      parameters:
+        - name: delay_ms
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 750
+            minimum: 0
+            maximum: 10000
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "202":
+          description: Delay armed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChaosArmResponse"
+  /demo/return-bad-payload:
+    post:
+      operationId: returnBadPayload
+      summary: Return malformed data on the next demo API call
+      parameters:
+        - $ref: "#/components/parameters/IncidentIdQuery"
+        - $ref: "#/components/parameters/ScenarioQuery"
+      responses:
+        "202":
+          description: Bad payload armed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChaosArmResponse"
+components:
+  parameters:
+    IncidentIdQuery:
+      name: incident_id
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Optional chaos target. Only matching requests consume targeted chaos rules.
+    ScenarioQuery:
+      name: scenario
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Optional chaos target key for deterministic demo runs.
+  responses:
+    DemoChaosFailure:
+      description: Demo chaos failure was intentionally triggered.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+  schemas:
+    HealthSummary:
+      type: object
+      required: [product, environment, overall_status, signals, updated_at]
+      additionalProperties: true
+      properties:
+        product:
+          type: string
+        environment:
+          type: string
+        overall_status:
+          type: string
+        signals:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        updated_at:
+          type: string
+    RecentDeploys:
+      type: object
+      required: [deploys]
+      additionalProperties: true
+      properties:
+        deploys:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    TopErrors:
+      type: object
+      required: [errors]
+      additionalProperties: true
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    IncidentContext:
+      type: object
+      required: [incident_id, health, recent_deploys, top_errors, candidate_runbooks]
+      additionalProperties: true
+      properties:
+        incident_id:
+          type: string
+        health:
+          $ref: "#/components/schemas/HealthSummary"
+        recent_deploys:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        top_errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        candidate_runbooks:
+          type: array
+          items:
+            type: string
+    RecentStatusEvents:
+      type: object
+      required: [events]
+      additionalProperties: true
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ChaosArmResponse:
+      type: object
+      required: [status, effect, delay_ms]
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+        effect:
+          type: string
+        incident_id:
+          type: [string, "null"]
+        scenario:
+          type: [string, "null"]
+        delay_ms:
+          type: integer

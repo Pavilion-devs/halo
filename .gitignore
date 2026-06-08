@@ -11,6 +11,7 @@ node_modules/
 *.tsbuildinfo
 dist/
 coverage/
+*.log
 
 # DB dumps / backups
 *.sqlite

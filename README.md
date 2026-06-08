@@ -20,6 +20,20 @@ It runs against a real live product (Jaguar), not a toy. Built for the TrueFound
 
 </div>
 
+## Contents
+
+- [What it actually does](#what-it-actually-does)
+- [TrueFoundry: what we used and how](#truefoundry-what-we-used-and-how)
+- [Get started](#get-started)
+  - [Prerequisites](#prerequisites)
+  - [1. Run the API](#1-run-the-api)
+  - [2. Run the web app](#2-run-the-web-app)
+  - [3. Connect TrueFoundry + Bedrock](#3-connect-truefoundry--bedrock)
+- [How it works](#how-it-works)
+- [Project structure](#project-structure)
+- [API](#api)
+- [Stack](#stack)
+
 ## What it actually does
 
 Halo runs incidents through an explicit, checkpointed workflow with three operating modes:
